@@ -145,7 +145,7 @@ JWT_SECRET=your_jwt_secret
 ## 🚀 Local Setup
 
 ```bash
-git clone https://github.com/Piyush-mit/Learning-Through-Projects.git
+git clone https://github.com/Piyush-mit/DevPen-Project.git
 cd DevPen 
 ```
 
