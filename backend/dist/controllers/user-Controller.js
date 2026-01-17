@@ -1,0 +1,138 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getcodeCount = exports.logout = exports.login = exports.signup = void 0;
+const bcrypt_1 = __importDefault(require("bcrypt"));
+const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const User_1 = require("../models/User");
+const zod_1 = __importDefault(require("zod"));
+const env_1 = require("../lib/env");
+const signup = async (req, res) => {
+    const validBody = zod_1.default.object({
+        username: zod_1.default.string().min(5).max(15),
+        email: zod_1.default.string().email(),
+        password: zod_1.default.string().min(8)
+    });
+    const parse = validBody.safeParse(req.body);
+    if (!parse.success) {
+        const invalidPart = parse.error.issues[0]?.path[0];
+        const message = `Invalid ${(String(invalidPart))}`;
+        return res.status(400).send({ message: message });
+    }
+    const { username, email, password } = req.body;
+    const usernameRegex = /^[a-zA-Z0-9]+$/;
+    try {
+        const existingUser = await User_1.User.findOne({
+            $or: [{ email }, { username }],
+        });
+        if (existingUser?.email === email) {
+            return res.status(400).send({ message: "Email already exists" });
+        }
+        else if (existingUser?.username === username) {
+            return res.status(400).send({ message: "Username already exists" });
+        }
+        if (!usernameRegex.test(username)) {
+            return res.status(400).send({ message: "Special characters not allowed" });
+        }
+        const salt = await bcrypt_1.default.genSalt();
+        const hashedPassword = await bcrypt_1.default.hash(password, salt);
+        const user = await User_1.User.create({
+            email: email,
+            password: hashedPassword,
+            username: username,
+        });
+        const jwtToken = jsonwebtoken_1.default.sign({
+            _id: user._id,
+            email: user.email,
+        }, env_1.ENV.JWT_SECRET, {
+            expiresIn: "1d",
+        });
+        res.cookie("token", jwtToken, {
+            secure: true,
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+            httpOnly: true,
+            sameSite: "none",
+        });
+        return res.status(201).send({
+            username: user.username,
+            picture: user.picture,
+            email: user.email,
+            savedCodes: user.savedCodes,
+        });
+    }
+    catch (error) {
+        return res.status(500).send({ message: "Error signing up", error: error });
+    }
+};
+exports.signup = signup;
+const login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        let existingUser = undefined;
+        if (email.includes("@")) {
+            existingUser = await User_1.User.findOne({ email: email });
+        }
+        else {
+            existingUser = await User_1.User.findOne({ username: email });
+        }
+        if (!existingUser) {
+            return res.status(400).send({ message: "User not found" });
+        }
+        const passwordMatched = await bcrypt_1.default.compare(password, existingUser.password);
+        if (!passwordMatched) {
+            return res.status(400).send({ message: "Incorrect password" });
+        }
+        const jwtToken = jsonwebtoken_1.default.sign({
+            _id: existingUser._id,
+            email: existingUser.email,
+        }, env_1.ENV.JWT_SECRET, {
+            expiresIn: "1d",
+        });
+        res.cookie("token", jwtToken, {
+            secure: true,
+            expires: new Date(Date.now() + 1000 * 60 * 60 * 24),
+            httpOnly: true,
+            sameSite: "none",
+        });
+        return res.status(200).send({
+            username: existingUser.username,
+            picture: existingUser.picture,
+            email: existingUser.email,
+            savedCodes: existingUser.savedCodes,
+        });
+    }
+    catch (error) {
+        return res.status(500).send({ message: "Error log in", error: error });
+    }
+};
+exports.login = login;
+const logout = async (req, res) => {
+    try {
+        res.clearCookie("token");
+        return res.status(200).send({ message: "Logged out successfully" });
+    }
+    catch (error) {
+        return res.status(500).send({ message: "Error logging out", error });
+    }
+};
+exports.logout = logout;
+const getcodeCount = async (req, res) => {
+    const userId = req._id;
+    try {
+        const user = await User_1.User.findById(userId);
+        if (!user) {
+            return res.status(404).send({ message: "Cannot find the user" });
+        }
+        return res.status(200).send({
+            username: user.username,
+            count: user.savedCodes.length
+        });
+    }
+    catch (error) {
+        return res.status(500).send({ message: "Cannot fetch user details" });
+    }
+};
+exports.getcodeCount = getcodeCount;
+//# sourceMappingURL=user-Controller.js.map

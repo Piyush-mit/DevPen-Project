@@ -1,0 +1,22 @@
+{
+  "name": "devpen",
+  "version": "1.0.0",
+  "description": "![React](https://img.shields.io/badge/React-19-blue?logo=react) ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue?logo=typescript) ![Node.js](https://img.shields.io/badge/Node.js-TS-green?logo=node.js) ![MongoDB](https://img.shields.io/badge/MongoDB-Database-green?logo=mongodb) ![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-Utility-blue?logo=tailwindcss) ![Redux](https://img.shields.io/badge/Redux-State-purple?logo=redux) ![License](https://img.shields.io/badge/License-MIT-yellow)",
+  "main": "index.js",
+  "scripts": {
+    "build" : "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
+    "start" : "npm run start --prefix backend"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Piyush-mit/DevPen-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Piyush-mit/DevPen-Project/issues"
+  },
+  "homepage": "https://github.com/Piyush-mit/DevPen-Project#readme"
+}
